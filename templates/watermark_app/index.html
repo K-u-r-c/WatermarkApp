@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Watermark Your Image</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+      body {
+        padding-top: 20px;
+        background-color: #f8f9fa; /* Light gray background */
+      }
+      
+      .container {
+        max-width: 600px;
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        margin: auto;
+      }
+      
+      .custom-file-input {
+        color: transparent;
+      }
+      
+      .custom-file-input::-webkit-file-upload-button {
+        visibility: hidden;
+      }
+      
+      .custom-file-input::before {
+        content: 'Choose Image';
+        display: inline-block;
+        background: linear-gradient(to right, #f9f9f9, #e3e3e3);
+        border: 1px solid #adadad;
+        border-radius: 5px;
+        padding: 8px 12px;
+        outline: none;
+        white-space: nowrap;
+        cursor: pointer;
+        text-align: center;
+        margin-right: 10px;
+      }
+      
+      .custom-file-input:hover::before {
+        border-color: black;
+      }
+      
+      .custom-file-input:active::before {
+        background: linear-gradient(to right, #e3e3e3, #f9f9f9);
+      }
+      
+      .form-group {
+        margin-bottom: 20px;
+      }
+      
+      .range-field {
+        display: flex;
+        align-items: center;
+      }
+      
+      .range-field span {
+        margin-left: 10px;
+      }
+      
+      .opacity-percentage {
+        font-weight: bold;
+      }
+      
+      @media (max-width: 768px) {
+        body {
+          padding: 10px;
+        }
+      
+        .container {
+          padding: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="text-center mb-4">Upload an Image to Watermark</h1>
+      <form action="" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="image">Image:</label>
+          <div class="custom-file">
+            <input type="file" class="custom-file-input" name="images" id="image" multiple required onchange="updateFileName('image')" />
+            <label class="custom-file-label" for="image">Choose file</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="watermark">Watermark:</label>
+          <div class="custom-file">
+            <input type="file" class="custom-file-input" name="watermark" id="watermark" required onchange="updateFileName('watermark')" />
+            <label class="custom-file-label" for="watermark">Choose file</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="opacity">Watermark Opacity:</label>
+          <div class="range-field">
+            <input type="range" name="opacity" id="opacity" class="custom-range" min="0" max="255" value="127" oninput="updateOpacityValue(this.value)" required />
+            <span id="opacityValue" class="opacity-percentage">50%</span>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Upload and Watermark</button>
+      </form>
+    </div>
+    <!-- Bootstrap JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+      function updateOpacityValue(val) {
+        var percentage = Math.round((val / 255) * 100)
+        document.getElementById('opacityValue').textContent = percentage + '%'
+      }
+      
+      function updateFileName(inputId) {
+        var input = document.getElementById(inputId)
+        var label = input.nextElementSibling
+        var fileName = ''
+        if (input.files && input.files.length > 1) {
+          fileName = input.files.length + ' files selected'
+        } else {
+          fileName = input.value.split('\\').pop()
+        }
+        label.innerHTML = fileName
+      }
+      
+      function validateForm() {
+        var files = document.getElementById('image').files
+        for (var i = 0; i < files.length; i++) {
+          var file = files[i]
+          var fileType = file.type.split('/')[0] // Get the file type (e.g., "image", "video", etc.)
+          if (fileType !== 'image') {
+            alert('Error: Only image files are allowed.')
+            return false
+          }
+        }
+        return true
+      }
+    </script>
+  </body>
+</html>

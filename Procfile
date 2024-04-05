@@ -1,0 +1,1 @@
+web: gunicorn watermark_project.wsgi
