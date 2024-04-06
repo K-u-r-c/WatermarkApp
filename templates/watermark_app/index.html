@@ -8,17 +8,49 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
     <style>
       body {
-        padding-top: 20px;
-        background-color: #f8f9fa; /* Light gray background */
+        background-color: #121212;
+        color: #e0e0e0;
       }
       
-      .container {
-        max-width: 600px;
-        background-color: white;
+      .main-container {
+        display: flex;
+        flex-direction: row;
+        height: 100vh;
+        width: 100vw;
+      }
+      
+      .form-container {
+        width: 30vw;
+        height: 100vh;
+        min-width: 500px;
+        background-color: #333;
         padding: 20px;
         border-radius: 10px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        margin: auto;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        color: #e0e0e0;
+        margin: 0;
+      }
+      
+      .preview-container {
+        width: 70vw;
+        height: 100vh;
+        background-color: #222;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        margin: 0;
+      }
+      
+      .imagePreview {
+        float: left;
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+      }
+      
+      #imagePreview img {
+        object-fit: contain;
+        max-width: 100%;
+        max-height: 100%;
+        display: block;
       }
       
       .custom-file-input {
@@ -29,32 +61,6 @@
         visibility: hidden;
       }
       
-      .custom-file-input::before {
-        content: 'Choose Image';
-        display: inline-block;
-        background: linear-gradient(to right, #f9f9f9, #e3e3e3);
-        border: 1px solid #adadad;
-        border-radius: 5px;
-        padding: 8px 12px;
-        outline: none;
-        white-space: nowrap;
-        cursor: pointer;
-        text-align: center;
-        margin-right: 10px;
-      }
-      
-      .custom-file-input:hover::before {
-        border-color: black;
-      }
-      
-      .custom-file-input:active::before {
-        background: linear-gradient(to right, #e3e3e3, #f9f9f9);
-      }
-      
-      .form-group {
-        margin-bottom: 20px;
-      }
-      
       .range-field {
         display: flex;
         align-items: center;
@@ -62,62 +68,71 @@
       
       .range-field span {
         margin-left: 10px;
+        color: #e0e0e0;
       }
       
-      .opacity-percentage {
+      .opacity-percentage,
+      .size-percentage {
         font-weight: bold;
-      }
-      
-      @media (max-width: 768px) {
-        body {
-          padding: 10px;
-        }
-      
-        .container {
-          padding: 15px;
-        }
+        color: #e0e0e0;
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1 class="text-center mb-4">Upload an Image to Watermark</h1>
-      <form action="" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
-        {% csrf_token %}
-        <div class="form-group">
-          <label for="image">Image:</label>
-          <div class="custom-file">
-            <input type="file" class="custom-file-input" name="images" id="image" multiple required onchange="updateFileName('image')" />
-            <label class="custom-file-label" for="image">Choose file</label>
+    <div class="main-container">
+      <div class="form-container">
+        <form action="" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="image">Image:</label>
+            <div class="custom-file">
+              <input type="file" class="custom-file-input" name="image" id="image" required onchange="updateFileName('image')" />
+              <label class="custom-file-label" for="image">Choose file</label>
+            </div>
           </div>
-        </div>
-        <div class="form-group">
-          <label for="watermark">Watermark:</label>
-          <div class="custom-file">
-            <input type="file" class="custom-file-input" name="watermark" id="watermark" required onchange="updateFileName('watermark')" />
-            <label class="custom-file-label" for="watermark">Choose file</label>
+          <div class="form-group">
+            <label for="watermark">Watermark:</label>
+            <div class="custom-file">
+              <input type="file" class="custom-file-input" name="watermark" id="watermark" required onchange="updateFileName('watermark')" />
+              <label class="custom-file-label" for="watermark">Choose file</label>
+            </div>
           </div>
-        </div>
-        <div class="form-group">
-          <label for="opacity">Watermark Opacity:</label>
-          <div class="range-field">
-            <input type="range" name="opacity" id="opacity" class="custom-range" min="0" max="255" value="127" oninput="updateOpacityValue(this.value)" required />
-            <span id="opacityValue" class="opacity-percentage">50%</span>
+          <div class="form-group">
+            <label for="opacity">Watermark Opacity:</label>
+            <div class="range-field">
+              <input type="range" name="opacity" id="opacity" class="custom-range" min="0" max="255" value="127" oninput="updateOpacityValue(this.value)" required />
+              <span id="opacityValue" class="opacity-percentage">50%</span>
+            </div>
           </div>
+          <div class="form-group">
+            <label for="size">Watermark Size:</label>
+            <div class="range-field">
+              <input type="range" name="size" id="size" class="custom-range" min="10" max="200" value="100" oninput="updateWatermarkSize(this.value)" required />
+              <span id="sizeValue" class="size-percentage">100px</span>
+            </div>
+          </div>
+
+          <input type="hidden" name="watermarkX" id="watermarkX" value="0" />
+          <input type="hidden" name="watermarkY" id="watermarkY" value="0" />
+          <input type="hidden" name="sizeX" id="sizeX" value="0" />
+          <input type="hidden" name="sizeY" id="sizeY" value="0" />
+
+          <button type="submit" class="btn btn-primary">Upload and Watermark</button>
+        </form>
+      </div>
+      <div id="preview-container" class="preview-container" class="form-group">
+        <div id="imagePreview" class="imagePreview">
+          <!-- Dynamically inserted images will go here -->
         </div>
-        <button type="submit" class="btn btn-primary">Upload and Watermark</button>
-      </form>
+      </div>
     </div>
+
     <!-- Bootstrap JS, Popper.js, and jQuery -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
     <script>
-      function updateOpacityValue(val) {
-        var percentage = Math.round((val / 255) * 100)
-        document.getElementById('opacityValue').textContent = percentage + '%'
-      }
-      
       function updateFileName(inputId) {
         var input = document.getElementById(inputId)
         var label = input.nextElementSibling
@@ -134,13 +149,172 @@
         var files = document.getElementById('image').files
         for (var i = 0; i < files.length; i++) {
           var file = files[i]
-          var fileType = file.type.split('/')[0] // Get the file type (e.g., "image", "video", etc.)
+          var fileType = file.type.split('/')[0]
           if (fileType !== 'image') {
             alert('Error: Only image files are allowed.')
             return false
           }
         }
         return true
+      }
+      
+      document.getElementById('image').addEventListener('change', function () {
+        loadImagePreview(this, 'imagePreview')
+      })
+      
+      document.getElementById('watermark').addEventListener('change', function () {
+        loadImagePreview(this, 'imagePreview', true)
+      })
+      
+      function updateOpacityValue(val) {
+        var percentage = Math.round((val / 255) * 100)
+        document.getElementById('opacityValue').textContent = percentage + '%'
+        // Update watermark image opacity
+        var watermarkImg = document.getElementById('watermarkImg')
+        if (watermarkImg) {
+          watermarkImg.style.opacity = val / 255
+        }
+      }
+      
+      document.getElementById('image').addEventListener('change', function () {
+        loadImagePreview(this, 'imagePreview')
+      
+        if (this.files && this.files[0]) {
+          const reader = new FileReader()
+          reader.onload = function (e) {
+            const baseImage = new Image()
+            baseImage.onload = function () {
+              const maxDimension = Math.min(baseImage.width, baseImage.height)
+              const sizeSlider = document.getElementById('size')
+              sizeSlider.max = maxDimension
+      
+              if (parseInt(sizeSlider.value) > maxDimension) {
+                sizeSlider.value = maxDimension
+                updateWatermarkSize(maxDimension)
+              }
+            }
+            baseImage.src = e.target.result
+          }
+          reader.readAsDataURL(this.files[0])
+        }
+      })
+      
+      function loadImagePreview(input, previewId, isWatermark = false) {
+        const previewContainer = document.getElementById(previewId)
+        if (input.files && input.files[0]) {
+          const reader = new FileReader()
+          reader.onload = function (e) {
+            if (isWatermark) {
+              const existingWatermarkImg = document.getElementById('watermarkImg')
+              if (existingWatermarkImg) {
+                previewContainer.removeChild(existingWatermarkImg)
+              }
+              const watermarkImg = document.createElement('img')
+              watermarkImg.setAttribute('src', e.target.result)
+              watermarkImg.setAttribute('id', 'watermarkImg')
+              watermarkImg.style.position = 'absolute'
+              watermarkImg.style.left = '0'
+              watermarkImg.style.top = '0'
+              watermarkImg.style.width = document.getElementById('size').value + 'px'
+              watermarkImg.style.height = 'auto'
+      
+              if (watermarkImg.width == 0 || watermarkImg.height == 0) {
+                watermarkImg.width = watermarkImg.height = 1
+              }
+      
+              const baseImage = document.querySelector('#imagePreview img:not(#watermarkImg)')
+              if (baseImage) {
+                const baseWidth = baseImage.clientWidth
+                const scaleFactor = baseWidth / baseImage.naturalWidth
+      
+                document.getElementById('sizeX').value = parseInt(watermarkImg.style.width, 10)
+                document.getElementById('sizeY').value = (parseInt(watermarkImg.style.width, 10) * watermarkImg.height) / watermarkImg.width
+      
+                watermarkImg.style.width = `${document.getElementById('size').value * scaleFactor}px`
+              }
+      
+              watermarkImg.style.opacity = document.getElementById('opacity').value / 255
+              watermarkImg.style.cursor = 'move'
+              previewContainer.appendChild(watermarkImg)
+              enableDrag(watermarkImg, previewContainer)
+            } else {
+              const existingImg = previewContainer.querySelector('img:not(#watermarkImg)')
+              if (!existingImg) {
+                previewContainer.innerHTML = ''
+                const img = document.createElement('img')
+                img.setAttribute('src', e.target.result)
+                previewContainer.appendChild(img)
+              } else {
+                existingImg.setAttribute('src', e.target.result)
+              }
+            }
+          }
+          reader.readAsDataURL(input.files[0])
+        }
+      }
+      
+      function enableDrag(element, container) {
+        let x = 0,
+          y = 0,
+          l = 0,
+          t = 0,
+          isDragging = false
+        element.onmousedown = (e) => {
+          e.preventDefault()
+          isDragging = true
+          x = e.clientX
+          y = e.clientY
+          l = element.offsetLeft
+          t = element.offsetTop
+          document.onmousemove = (e) => {
+            e.preventDefault()
+            if (!isDragging) return
+      
+            let newX = l + e.clientX - x
+            let newY = t + e.clientY - y
+      
+            const rect = container.getBoundingClientRect()
+            const elRect = element.getBoundingClientRect()
+            if (newX < 0) newX = 0
+            if (newY < 0) newY = 0
+            if (newX + elRect.width > rect.width) newX = rect.width - elRect.width
+            if (newY + elRect.height > rect.height) newY = rect.height - elRect.height
+            element.style.left = newX + 'px'
+            element.style.top = newY + 'px'
+          }
+          document.onmouseup = () => {
+            isDragging = false
+            document.onmousemove = null
+            document.onmouseup = null
+            const baseImage = document.querySelector('#imagePreview img:not(#watermarkImg)')
+            const scaleX = baseImage.naturalWidth / container.getBoundingClientRect().width
+            const scaleY = baseImage.naturalHeight / container.getBoundingClientRect().height
+            document.getElementById('watermarkX').value = Math.round(parseInt(element.style.left) * scaleX)
+            document.getElementById('watermarkY').value = Math.round(parseInt(element.style.top) * scaleY)
+      
+            console.log('X: ', document.getElementById('watermarkX').value + ' Y: ', document.getElementById('watermarkY').value)
+          }
+        }
+      }
+      
+      function updateWatermarkSize(val) {
+        const sizeSlider = document.getElementById('size')
+        const adjustedValue = Math.min(val, sizeSlider.max)
+        var watermarkImg = document.getElementById('watermarkImg')
+        if (watermarkImg) {
+          const baseImage = document.querySelector('#imagePreview img:not(#watermarkImg)')
+          if (baseImage) {
+            const baseWidth = baseImage.clientWidth
+            const scaleFactor = baseWidth / baseImage.naturalWidth
+      
+            document.getElementById('sizeX').value = Math.round(adjustedValue)
+            document.getElementById('sizeY').value = Math.round((adjustedValue * watermarkImg.height) / watermarkImg.width)
+      
+            watermarkImg.style.width = `${adjustedValue * scaleFactor}px`
+          }
+          watermarkImg.style.height = 'auto'
+        }
+        document.getElementById('sizeValue').textContent = adjustedValue + 'px'
       }
     </script>
   </body>
