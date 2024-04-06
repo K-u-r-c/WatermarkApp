@@ -12,4 +12,4 @@ if __name__ == "__main__":
     Timer(1, open_browser).start()
     serve(application, host="0.0.0.0", port=8080)
 
-# pyinstaller --onefile --hidden-import=babel.numbers --hidden-import=whitenoise --add-data="templates:templates" --distpath=./build/dist --workpath=./build/work local_main.py
+# pyinstaller --onefile --hidden-import=babel.numbers --hidden-import=whitenoise --add-data="templates:templates" --add-data="static:static" --distpath=./build/dist --workpath=./build/work --name=WatermarkApplication local_main.py

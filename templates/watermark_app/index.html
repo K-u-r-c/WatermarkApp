@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -6,6 +7,7 @@
     <title>Watermark Your Image</title>
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="shortcut icon" type="image/png" href="{% static 'images/favicon.png' %}" />
     <style>
       body {
         background-color: #121212;
@@ -160,6 +162,15 @@
       
       document.getElementById('image').addEventListener('change', function () {
         loadImagePreview(this, 'imagePreview')
+      
+        function onImageResize(entries) {
+          for (let entry of entries) {
+            updateWatermarkSize(document.getElementById('size').value)
+          }
+        }
+      
+        const observer = new ResizeObserver(onImageResize)
+        observer.observe(this)
       })
       
       document.getElementById('watermark').addEventListener('change', function () {
@@ -169,7 +180,6 @@
       function updateOpacityValue(val) {
         var percentage = Math.round((val / 255) * 100)
         document.getElementById('opacityValue').textContent = percentage + '%'
-        // Update watermark image opacity
         var watermarkImg = document.getElementById('watermarkImg')
         if (watermarkImg) {
           watermarkImg.style.opacity = val / 255
@@ -210,33 +220,30 @@
                 previewContainer.removeChild(existingWatermarkImg)
               }
               const watermarkImg = document.createElement('img')
-              watermarkImg.setAttribute('src', e.target.result)
-              watermarkImg.setAttribute('id', 'watermarkImg')
               watermarkImg.style.position = 'absolute'
               watermarkImg.style.left = '0'
               watermarkImg.style.top = '0'
               watermarkImg.style.width = document.getElementById('size').value + 'px'
               watermarkImg.style.height = 'auto'
-      
-              if (watermarkImg.width == 0 || watermarkImg.height == 0) {
-                watermarkImg.width = watermarkImg.height = 1
-              }
-      
-              const baseImage = document.querySelector('#imagePreview img:not(#watermarkImg)')
-              if (baseImage) {
-                const baseWidth = baseImage.clientWidth
-                const scaleFactor = baseWidth / baseImage.naturalWidth
-      
-                document.getElementById('sizeX').value = parseInt(watermarkImg.style.width, 10)
-                document.getElementById('sizeY').value = (parseInt(watermarkImg.style.width, 10) * watermarkImg.height) / watermarkImg.width
-      
-                watermarkImg.style.width = `${document.getElementById('size').value * scaleFactor}px`
-              }
-      
               watermarkImg.style.opacity = document.getElementById('opacity').value / 255
               watermarkImg.style.cursor = 'move'
-              previewContainer.appendChild(watermarkImg)
-              enableDrag(watermarkImg, previewContainer)
+              watermarkImg.setAttribute('id', 'watermarkImg')
+      
+              watermarkImg.onload = function () {
+                const baseImage = document.querySelector('#imagePreview img:not(#watermarkImg)')
+                if (baseImage) {
+                  const baseWidth = baseImage.clientWidth
+                  const scaleFactor = baseWidth / baseImage.naturalWidth
+      
+                  document.getElementById('sizeX').value = Math.round(parseInt(watermarkImg.style.width, 10))
+                  document.getElementById('sizeY').value = Math.round((parseInt(watermarkImg.style.width, 10) * watermarkImg.naturalHeight) / watermarkImg.width)
+      
+                  watermarkImg.style.width = `${document.getElementById('size').value * scaleFactor}px`
+                }
+                previewContainer.appendChild(watermarkImg)
+                enableDrag(watermarkImg, baseImage)
+              }
+              watermarkImg.setAttribute('src', e.target.result)
             } else {
               const existingImg = previewContainer.querySelector('img:not(#watermarkImg)')
               if (!existingImg) {
@@ -253,7 +260,7 @@
         }
       }
       
-      function enableDrag(element, container) {
+      function enableDrag(element, containerImage) {
         let x = 0,
           y = 0,
           l = 0,
@@ -273,12 +280,11 @@
             let newX = l + e.clientX - x
             let newY = t + e.clientY - y
       
-            const rect = container.getBoundingClientRect()
             const elRect = element.getBoundingClientRect()
             if (newX < 0) newX = 0
             if (newY < 0) newY = 0
-            if (newX + elRect.width > rect.width) newX = rect.width - elRect.width
-            if (newY + elRect.height > rect.height) newY = rect.height - elRect.height
+            if (newX + elRect.width > containerImage.width) newX = containerImage.width - elRect.width
+            if (newY + elRect.height > containerImage.height) newY = containerImage.height - elRect.height
             element.style.left = newX + 'px'
             element.style.top = newY + 'px'
           }
@@ -287,12 +293,22 @@
             document.onmousemove = null
             document.onmouseup = null
             const baseImage = document.querySelector('#imagePreview img:not(#watermarkImg)')
-            const scaleX = baseImage.naturalWidth / container.getBoundingClientRect().width
-            const scaleY = baseImage.naturalHeight / container.getBoundingClientRect().height
+            scaleX = baseImage.naturalWidth / containerImage.width
+            scaleY = baseImage.naturalHeight / containerImage.height
+      
+            if (scaleX <= 1) {
+              scaleX = 1
+            }
+      
+            if (scaleY <= 1) {
+              scaleY = 1
+            }
+      
             document.getElementById('watermarkX').value = Math.round(parseInt(element.style.left) * scaleX)
             document.getElementById('watermarkY').value = Math.round(parseInt(element.style.top) * scaleY)
       
-            console.log('X: ', document.getElementById('watermarkX').value + ' Y: ', document.getElementById('watermarkY').value)
+            console.log(document.getElementById('watermarkX').value, document.getElementById('watermarkY').value)
+            console.log(scaleX, scaleY)
           }
         }
       }
