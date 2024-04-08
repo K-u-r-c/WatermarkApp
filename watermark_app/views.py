@@ -5,25 +5,44 @@ from django.core.files.storage import default_storage
 
 
 def resize_watermark(image_size, watermark):
+    """Resize the watermark to the specified dimensions."""
     resized_watermark = watermark.resize(image_size, Image.Resampling.LANCZOS)
-
     return resized_watermark
+
+
+def rotate_watermark(watermark, angle):
+    """Rotate the watermark by the given angle."""
+    return watermark.rotate(angle, expand=False)
+
+
+def adjust_opacity(watermark, opacity):
+    """Adjust the opacity of the watermark."""
+    assert 0 <= opacity <= 255, "Opacity must be between 0 and 255"
+    if opacity < 255:
+        alpha = watermark.split()[3]
+        alpha = alpha.point(lambda p: p * opacity / 255)
+        watermark.putalpha(alpha)
+    return watermark
 
 
 def apply_watermark(request):
     if request.method == "POST":
         image_file = request.FILES.get("image")
         if not image_file or not image_file.content_type.startswith("image"):
-            return HttpResponseBadRequest("Error: No image file provided ")
+            return HttpResponseBadRequest(
+                "Error: No image file provided or file is not an image"
+            )
 
         watermark_file = request.FILES["watermark"]
         opacity = int(request.POST["opacity"])
+        rotation_angle = -int(request.POST.get("rotation", 0))
 
         watermark_path = default_storage.save(
             "temp/" + watermark_file.name, watermark_file
         )
         watermark = Image.open(watermark_path).convert("RGBA")
         watermark = adjust_opacity(watermark, opacity)
+        watermark = rotate_watermark(watermark, rotation_angle)
 
         image_path = default_storage.save("temp/" + image_file.name, image_file)
         image = Image.open(image_path)
@@ -54,13 +73,3 @@ def apply_watermark(request):
         return response
     else:
         return render(request, "watermark_app/index.html")
-
-
-def adjust_opacity(watermark, opacity):
-    """Adjust the opacity of the watermark."""
-    assert 0 <= opacity <= 255, "Opacity must be between 0 and 255"
-    if opacity < 255:
-        alpha = watermark.split()[3]
-        alpha = alpha.point(lambda p: p * opacity / 255)
-        watermark.putalpha(alpha)
-    return watermark

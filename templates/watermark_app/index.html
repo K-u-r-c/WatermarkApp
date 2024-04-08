@@ -31,6 +31,7 @@
         box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
         color: #e0e0e0;
         margin: 0;
+        z-index: 1000;
       }
       
       .preview-container {
@@ -44,7 +45,7 @@
       .imagePreview {
         float: left;
         position: relative;
-        overflow: hidden;
+        overflow: visible;
         height: 100%;
       }
       
@@ -111,6 +112,14 @@
             <div class="range-field">
               <input type="range" name="size" id="size" class="custom-range" min="10" max="200" value="100" oninput="updateWatermarkSize(this.value)" required />
               <span id="sizeValue" class="size-percentage">100px</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="rotation">Watermark Rotation:</label>
+            <div class="range-field">
+              <input type="range" name="rotation" id="rotation" class="custom-range" min="0" max="360" value="0" oninput="updateWatermarkRotation(this.value)" required />
+              <span id="rotationValue" class="rotation-percentage">0°</span>
             </div>
           </div>
 
@@ -217,6 +226,7 @@
             if (isWatermark) {
               const existingWatermarkImg = document.getElementById('watermarkImg')
               if (existingWatermarkImg) {
+                previewContainer.removeChild(existingWatermarkImg.nextSibling)
                 previewContainer.removeChild(existingWatermarkImg)
               }
               const watermarkImg = document.createElement('img')
@@ -229,6 +239,14 @@
               watermarkImg.style.cursor = 'move'
               watermarkImg.setAttribute('id', 'watermarkImg')
       
+              const selectionMark = document.createElement('div')
+              selectionMark.id = 'selectionMark'
+              selectionMark.style.position = 'absolute'
+              selectionMark.style.left = '0'
+              selectionMark.style.top = '0'
+              selectionMark.style.pointerEvents = 'none'
+              selectionMark.style.border = '2px dashed blue'
+      
               watermarkImg.onload = function () {
                 const baseImage = document.querySelector('#imagePreview img:not(#watermarkImg)')
                 if (baseImage) {
@@ -240,8 +258,19 @@
       
                   watermarkImg.style.width = `${document.getElementById('size').value * scaleFactor}px`
                 }
+      
                 previewContainer.appendChild(watermarkImg)
-                enableDrag(watermarkImg, baseImage)
+                previewContainer.appendChild(selectionMark)
+      
+                enableDrag(watermarkImg, baseImage, selectionMark)
+                adjustSelectionMark(selectionMark, watermarkImg)
+      
+                watermarkImg.addEventListener('mouseenter', () => {
+                  selectionMark.style.border = '2px solid blue'
+                })
+                watermarkImg.addEventListener('mouseleave', () => {
+                  selectionMark.style.border = '2px dashed blue'
+                })
               }
               watermarkImg.setAttribute('src', e.target.result)
             } else {
@@ -260,7 +289,16 @@
         }
       }
       
-      function enableDrag(element, containerImage) {
+      function adjustSelectionMark(selectionMark, watermarkImg) {
+        selectionMark.style.width = watermarkImg.offsetWidth + 'px'
+        selectionMark.style.height = watermarkImg.offsetHeight + 'px'
+        selectionMark.style.left = watermarkImg.style.left
+        selectionMark.style.top = watermarkImg.style.top
+      
+        selectionMark.style.transform = watermarkImg.style.transform
+      }
+      
+      function enableDrag(element, containerImage, selectionMark) {
         let x = 0,
           y = 0,
           l = 0,
@@ -273,6 +311,7 @@
           y = e.clientY
           l = element.offsetLeft
           t = element.offsetTop
+          selectionMark.style.border = '2px solid red'
           document.onmousemove = (e) => {
             e.preventDefault()
             if (!isDragging) return
@@ -280,18 +319,18 @@
             let newX = l + e.clientX - x
             let newY = t + e.clientY - y
       
-            const elRect = element.getBoundingClientRect()
-            if (newX < 0) newX = 0
-            if (newY < 0) newY = 0
-            if (newX + elRect.width > containerImage.width) newX = containerImage.width - elRect.width
-            if (newY + elRect.height > containerImage.height) newY = containerImage.height - elRect.height
             element.style.left = newX + 'px'
             element.style.top = newY + 'px'
+      
+            selectionMark.style.left = newX + 'px'
+            selectionMark.style.top = newY + 'px'
           }
           document.onmouseup = () => {
             isDragging = false
             document.onmousemove = null
             document.onmouseup = null
+            selectionMark.style.border = '2px solid blue'
+      
             const baseImage = document.querySelector('#imagePreview img:not(#watermarkImg)')
             scaleX = baseImage.naturalWidth / containerImage.width
             scaleY = baseImage.naturalHeight / containerImage.height
@@ -331,6 +370,17 @@
           watermarkImg.style.height = 'auto'
         }
         document.getElementById('sizeValue').textContent = adjustedValue + 'px'
+        adjustSelectionMark(document.getElementById('selectionMark'), watermarkImg)
+      }
+      
+      function updateWatermarkRotation(val) {
+        var rotationDegrees = val
+        var watermarkImg = document.getElementById('watermarkImg')
+        if (watermarkImg) {
+          watermarkImg.style.transform = `rotate(${rotationDegrees}deg)`
+          document.getElementById('rotationValue').textContent = rotationDegrees + '°'
+          adjustSelectionMark(document.getElementById('selectionMark'), watermarkImg)
+        }
       }
     </script>
   </body>
