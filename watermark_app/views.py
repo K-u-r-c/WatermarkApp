@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from PIL import Image, ImageMath
+from PIL import Image, ImageOps
 import math
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.core.files.storage import default_storage
