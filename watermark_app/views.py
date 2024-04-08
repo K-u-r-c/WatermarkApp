@@ -5,22 +5,9 @@ from django.core.files.storage import default_storage
 
 
 def resize_watermark(image_size, watermark):
-    """Rotate the watermark by the given angle without clipping edges and resize canvas to original size."""
-    original_width, original_height = watermark.size
-    angle_rad = math.radians(angle)
-    
-    cos_angle = abs(math.cos(angle_rad))
-    sin_angle = abs(math.sin(angle_rad))
-    new_width = int((original_height * sin_angle) + (original_width * cos_angle))
-    new_height = int((original_height * cos_angle) + (original_width * sin_angle))
-    
-    rotated_watermark = watermark.rotate(angle, expand=True)
-    
-    new_image = Image.new('RGBA', (new_width, new_height), (0, 0, 0, 0))
-    new_image.paste(rotated_watermark, ((new_width - rotated_watermark.width) // 2,
-                                        (new_height - rotated_watermark.height) // 2))
-    
-    return new_image
+    """Resize the watermark to the specified dimensions."""
+    resized_watermark = watermark.resize(image_size, Image.Resampling.LANCZOS)
+    return resized_watermark
 
 
 def rotate_watermark(watermark, angle):
