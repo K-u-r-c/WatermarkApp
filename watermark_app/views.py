@@ -11,23 +11,22 @@ def resize_watermark(image_size, watermark):
     return resized_watermark
 
 
-def rotate_watermark(watermark, angle):
-    """Rotate the watermark by the given angle without clipping edges and resize canvas to original size."""
-    original_width, original_height = watermark.size
-    angle_rad = math.radians(angle)
+def rotate_watermark(watermark, angle, original_size):
+    """
+    Rotate the watermark by the given angle without cropping edges, 
+    and resize it to maintain the original size as closely as possible.
     
-    cos_angle = abs(math.cos(angle_rad))
-    sin_angle = abs(math.sin(angle_rad))
-    new_width = int((original_height * sin_angle) + (original_width * cos_angle))
-    new_height = int((original_height * cos_angle) + (original_width * sin_angle))
-    
+    :param watermark: PIL.Image object of the watermark.
+    :param angle: Rotation angle in degrees.
+    :param original_size: A tuple (width, height) specifying the desired dimensions 
+                          to which the rotated image should be scaled.
+    """
     rotated_watermark = watermark.rotate(angle, expand=True)
+    original_ratio = min(original_size[0] / rotated_watermark.width, original_size[1] / rotated_watermark.height)
+    new_size = (int(rotated_watermark.width * original_ratio), int(rotated_watermark.height * original_ratio))
+    resized_rotated_watermark = rotated_watermark.resize(new_size, Image.ANTIALIAS)
 
-    new_image = Image.new('RGBA', (new_width, new_height), (0, 0, 0, 0))
-    new_image.paste(rotated_watermark, ((new_width - rotated_watermark.width) // 2,
-                                        (new_height - rotated_watermark.height) // 2))
-
-    return new_image
+    return resized_rotated_watermark
 
 
 def adjust_opacity(watermark, opacity):
@@ -57,7 +56,7 @@ def apply_watermark(request):
         )
         watermark = Image.open(watermark_path).convert("RGBA")
         watermark = adjust_opacity(watermark, opacity)
-        watermark = rotate_watermark(watermark, rotation_angle)
+        watermark = rotate_watermark(watermark, rotation_angle, watermark.size)
 
         image_path = default_storage.save("temp/" + image_file.name, image_file)
         image = Image.open(image_path)
